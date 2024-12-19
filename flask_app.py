@@ -106,7 +106,7 @@ def price_edit():
                     new_price = request.form.get(f"new_price_{selected_category}_{product['id']}")
                     new_weight = request.form.get(f"new_weight_{selected_category}_{product['id']}")
 
-                    print("FFFFFFFFFFFFFFFFFF SKU:", product["sku"], "Name:", product["name"], "New Price:", new_price, "New Weight:", new_weight)
+                    #print("FFFFFFFFFFFFFFFFFF SKU:", product["sku"], "Name:", product["name"], "New Price:", new_price, "New Weight:", new_weight)
 
 
                     update_data = {}
