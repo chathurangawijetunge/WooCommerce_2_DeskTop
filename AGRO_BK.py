@@ -197,7 +197,10 @@ def create_gui():
     label = tk.Label(root, text="Flask Server is running...", font=("Arial", 12))
     label.pack(pady=20)
 
-    open_button = tk.Button(root, text="Edit Product Stock", command=open_home_page, font=("Arial", 10))
+    open_button = tk.Button(root, text="Edit Product Stock", command=stock_edit, font=("Arial", 10))
+    open_button.pack(pady=10)
+
+    open_button = tk.Button(root, text="Edit Product Price", command=price_edit, font=("Arial", 10))
     open_button.pack(pady=10)
 
     edit_button = tk.Button(root, text="Edit API Credentials", command=edit_credentials, font=("Arial", 10))

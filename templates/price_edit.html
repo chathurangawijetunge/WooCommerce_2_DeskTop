@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Price and Weight</title>
+    <style>
+        /* Basic body styling */
+        body {
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* Navigation bar styles */
+        .navbar {
+            background-color: #b6f8d4; /* Fixed missing semicolon */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .navbar a {
+            color: rgb(0, 0, 0);
+            padding: 10px 20px;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+
+        .navbar a:hover {
+            background-color: #1e9e3a;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center; /* Center tabs horizontally */
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-right: 5px;
+            background-color: #b6f8d4;
+            border: 1px solid #b6f8d4;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+            width: 80%; /* Set width for tab content */
+            margin: 0 auto; /* Center content horizontally */
+        }
+
+        .active-tab {
+            background-color: #1e9e3a;
+            border-bottom: 2px solid #064213;
+        }
+
+        .active-content {
+            display: block;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            margin-left: auto; /* Center the table horizontally */
+            margin-right: auto;
+        }
+
+        th, td {
+            width: 75px;
+            padding: 2px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        td.product-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip;
+        }
+
+        input[type="number"] {
+            width: 75px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1e9e3a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button:hover {
+            background-color: #064213;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <a href="/stock_edit">Edit Stock</a>
+
+    </div>
+
+    <h1>Edit Price and Weight</h1>
+
+    <div class="tabs">
+        {% for category in category_names %}
+            <div class="tab" onclick="showTab('{{ category }}')">{{ category }}</div>
+        {% endfor %}
+    </div>
+
+    <form method="POST" action="/price_edit">
+        {% for category in category_names %}
+            <div class="tab-content" id="{{ category }}">
+                <h2>{{ category }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Current Price</th>
+                            <th>New Price</th>
+                            <th>Current Weight</th>
+                            <th>New Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in categories[category] %}
+                        <tr>
+                            <td>{{ product.sku }}</td>
+                            <td class="product-name">{{ product.name }}</td>
+                            <td>{{ product.price }}</td>
+                            <td>
+                                <input type="number" name="new_price_{{ category }}_{{ product.id }}" value="{{ product.price }}" step="0.01" min="0">
+                            </td>
+                            <td>{{ product.weight }}</td>
+                            <td>
+                                <input type="number" name="new_weight_{{ category }}_{{ product.id }}" value="{{ product.weight }}" step="0.001" min="0">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" name="category_select" value="{{ category }}">Update Price & Weight for {{ category }}</button>
+            </div>
+        {% endfor %}
+    </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            showTab("{{ category_names[0] }}");
+        });
+
+        function showTab(category) {
+            var contents = document.querySelectorAll('.tab-content');
+            contents.forEach(function(content) {
+                content.classList.remove('active-content');
+            });
+
+            var tabs = document.querySelectorAll('.tab');
+            tabs.forEach(function(tab) {
+                tab.classList.remove('active-tab');
+            });
+
+            document.getElementById(category).classList.add('active-content');
+            var activeTab = document.querySelector('.tab[onclick="showTab(\'' + category + '\')"]');
+            activeTab.classList.add('active-tab');
+        }
+    </script>
+</body>
+</html>
