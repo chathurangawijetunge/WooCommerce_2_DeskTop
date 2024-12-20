@@ -13,6 +13,62 @@ from AGRO_BK import *
 # Flask app
 app = Flask(__name__)
 
+def page_reload(e):
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f8d7da;
+            }}
+            .error-box {{
+                background-color: #ffffff;
+                border: 2px solid #f5c6cb;
+                color: #721c24;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }}
+            .countdown {{
+                font-weight: bold;
+                font-size: 1.5em;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="error-box">
+            <h3>An error occurred: {e}</h3>
+            <p>The page will refresh automatically in <span class="countdown" id="countdown">5</span> seconds.</p>
+            <button onclick="window.location.reload();">Refresh Now</button>
+        </div>
+        <script>
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+
+            const timer = setInterval(() => {{
+                countdown--;
+                countdownElement.textContent = countdown;
+                if (countdown <= 0) {{
+                    clearInterval(timer);
+                    window.location.reload();
+                }}
+            }}, 1000);
+        </script>
+    </body>
+    </html>
+    """
+
 
 
 @app.route('/stock_edit', methods=['GET', 'POST'])
@@ -62,10 +118,7 @@ def display_products():
         return render_template("stock_edit.html", categories=categories, category_names=list(categories.keys()))
 
     except Exception as e:
-        return f"""
-            <h1>An error occurred: {e}</h1>
-            <button onclick="window.location.reload();">Refresh</button>
-            """
+        return page_reload(e)
 #----------------------------------------------------------------------------------------------------------------------------------
 @app.route('/price_edit', methods=['GET', 'POST'])
 def price_edit():
@@ -138,10 +191,7 @@ def price_edit():
     except Exception as e:
         # Log and return error if an exception occurs
         app.logger.error(f"An error occurred: {e}")
-        return f"""
-            <h1>An error occurred: {e}</h1>
-            <button onclick="window.location.reload();">Refresh</button>
-        """
+        return page_reload(e)
 
 #----------------------------------------------------------------------------------------------------------------------------------
 
