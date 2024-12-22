@@ -1852,7 +1852,7 @@
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.496.0_x64__qbz5n2kfra8p0\\Lib\\typing.py',
    'PYMODULE'),
   ('typing_extensions',
-   'C:\\Users\\Chathuranga\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\setuptools\\_vendor\\typing_extensions.py',
+   'C:\\Users\\Chathuranga\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\typing_extensions.py',
    'PYMODULE'),
   ('unittest',
    'C:\\Program '
