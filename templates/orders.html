@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .tabs { display: flex; cursor: pointer; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; border: 1px solid #ddd; border-bottom: none; }
+        .tab.active { background-color: #f2f2f2; font-weight: bold; }
+        .tab-content { border: 1px solid #ddd; padding: 20px; display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { padding: 5px 10px; cursor: pointer; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .modal.show { display: block; }
+        .modal-header { font-size: 18px; margin-bottom: 10px; }
+        .modal-footer { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Manage Orders</h1>
+    <div class="tabs">
+        <!-- Dynamic tabs based on order status -->
+        {% for status in order_statuses %}
+            <div class="tab" data-status="{{ status }}" onclick="showTab(this)">{{ status }}</div>
+        {% endfor %}
+    </div>
+
+    {% for status, orders in order_statuses.items() %}
+        <div id="tab-{{ status }}" class="tab-content {% if loop.first %} active {% endif %}">
+            <h2>{{ status }} Orders</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer Name</th>
+                        <th>Date Created</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                        {% if status == 'Processing' or status == 'Dispatched' %}
+                            <th>Change Status</th>  <!-- Add a column for status change in both Processing and Dispatching tabs -->
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.number }}</td>
+                            <td>{{ order.customer_name }}</td>
+                            <td>{{ order.date_created }}</td>
+                            <td>{{ order.total }}</td>
+                            <td>
+                                <button onclick="openItemsModal({{ order.id }})">View Items</button>
+                            </td>
+                            {% if status == 'Processing' or status == 'Dispatched' %}
+                                <td>
+                                    <select id="status-select-{{ order.id }}">
+                                        <!-- List all statuses except the current one -->
+                                        {% for other_status in order_statuses %}
+                                            {% if other_status != status %}
+                                                <option value="{{ other_status }}" {% if other_status == order.status %} selected {% endif %}>{{ other_status }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    <button onclick="changeStatus({{ order.id }})">Update Status</button>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+    <!-- Modal for viewing order items -->
+    <div id="items-modal" class="modal">
+        <div class="modal-header">Order Items</div>
+        <div id="items-content">
+            <p>Loading...</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeItemsModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Show the clicked tab's content
+        function showTab(tab) {
+            var status = tab.getAttribute('data-status');
+            var tabs = document.querySelectorAll('.tab');
+            var tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(function(tab) { tab.classList.remove('active'); });
+            tabContents.forEach(function(content) { content.classList.remove('active'); });
+
+            tab.classList.add('active');
+            document.getElementById('tab-' + status).classList.add('active');
+        }
+
+        // Fetch and display order items in the modal
+        function openItemsModal(orderId) {
+            const modalContent = document.getElementById('items-content');
+            modalContent.innerHTML = '<p>Loading...</p>'; // Loading message
+            document.getElementById('items-modal').classList.add('show');
+
+            // Fetch order items from the server
+            fetch(`/order_items/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order items');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        modalContent.innerHTML = `<p>${data.error}</p>`;
+                    } else {
+                        // Render items in a table
+                        let itemsTable = `
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.items.forEach(item => {
+                            itemsTable += `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${item.price.toFixed(2)}</td>
+                                    <td>${item.total.toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+                        itemsTable += `
+                                </tbody>
+                            </table>
+                        `;
+                        
+                        // Add shipping, discount, net total, and final total
+                        itemsTable += `
+                            <div>
+                                <p><strong>Shipping Total:</strong> ${data.shipping_total.toFixed(2)}</p>
+                                <p><strong>Discount Total:</strong> ${data.discount_total.toFixed(2)}</p>
+                                <p><strong>Net Total:</strong> ${data.net_total.toFixed(2)}</p>
+                                <p><strong>Final Total:</strong> ${data.final_total.toFixed(2)}</p>
+                            </div>
+                        `;
+                        
+                        modalContent.innerHTML = itemsTable;
+                    }
+                })
+                .catch(error => {
+                    modalContent.innerHTML = `<p>Error loading items: ${error.message}</p>`;
+                });
+        }
+
+        // Close the items modal
+        function closeItemsModal() {
+            document.getElementById('items-modal').classList.remove('show');
+        }
+
+        // Function to change order status
+        function changeStatus(orderId) {
+            var statusSelect = document.getElementById('status-select-' + orderId);
+            var newStatus = statusSelect.value;
+
+            // Send the new status to the server
+            fetch(`/change_order_status/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order status updated successfully!');
+                    // Reload the page to show updated status
+                    location.reload();
+                } else {
+                    alert('Failed to update order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+                alert('Error updating order status');
+            });
+        }
+    </script>
+</body>
+</html>

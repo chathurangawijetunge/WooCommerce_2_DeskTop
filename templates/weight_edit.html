@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Weight and Net Weight</title>
+    <style>
+        /* Basic body styling */
+        body {
+            margin: 0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* Navigation bar styles */
+        .navbar {
+            background-color: #b6f8d4; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .navbar a {
+            color: rgb(0, 0, 0);
+            padding: 10px 20px;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+
+        .navbar .selected_menu {
+            background-color: #084d17; /* Change to your preferred color */
+            color: white; /* Optional: Make the text color white */
+        }
+        .navbar a:hover {
+            background-color: #1e9e3a;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-right: 5px;
+            background-color: #b6f8d4;
+            border: 1px solid #b6f8d4;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .active-tab {
+            background-color: #1e9e3a;
+            border-bottom: 2px solid #064213;
+        }
+
+        .active-content {
+            display: block;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        th, td {
+            padding: 2px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        td.product-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-align: left;
+            text-overflow: ellipsis;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1e9e3a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button:hover {
+            background-color: #064213;
+        }
+
+        /* Loader styles */
+        #loader {
+            display: none;
+            margin: 20px auto;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1e9e3a;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <a href="/price_edit">Edit Price</a>       
+        <a href="/stock_edit">Edit Stock</a>
+        <a href="/weight_edit" class="selected_menu">Edit Weight</a>
+    </div>
+
+    <h1>Edit Weight, Net Weight, and Packaging</h1>
+
+    <div class="tabs">
+        {% for category in category_names %}
+            <div class="tab" onclick="showTab('{{ category }}')">{{ category }}</div>
+        {% endfor %}
+    </div>
+
+    <form id="weight-form" method="POST" action="/weight_edit">
+        {% for category in category_names %}
+            <div class="tab-content" id="{{ category }}">
+                <h2>{{ category }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Name</th>
+                            <th>Gross Weight</th>
+                            <th>+/-</th>
+                            <th>Net Weight</th>
+                            <th>+/-</th>
+                            <th>Packaging</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in categories[category] %}
+                        <tr>
+                            <td>{{ product.sku }}</td>
+                            <td class="product-name">{{ product.name }}</td>
+                            <td>{{ product.weight }}</td>
+                            <td>
+                                <input type="number" name="new_weight_{{ category }}_{{ product.id }}" value="{{ product.weight }}" step="0.001" min="0">
+                            </td>
+                            <td>
+                                {% if product.net_weight != "N/A" %}
+                                    {{ product.net_weight | replace(" Kg", "") }} <!-- Remove unit if present -->
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.net_weight != 'N/A' %}
+                                    <input type="number" name="new_net_weight_{{ category }}_{{ product.id }}" value="{{ product.net_weight | replace(' Kg', '') }}" step="0.001" min="0">
+                                {% else %}
+                                    <input type="number" name="new_net_weight_{{ category }}_{{ product.id }}" value="" step="0.001" min="0">
+                                {% endif %}
+                            </td>
+                            <td>{{ product.packaging }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" name="category_select" value="{{ category }}" class="submit-button">Update {{ category }}</button>
+            </div>
+        {% endfor %}
+    </form>
+
+    <!-- Loader -->
+    <div id="loader"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Set the first tab as the default active one
+            showTab("{{ category_names[0] }}");
+        });
+
+        function showTab(category) {
+            var contents = document.querySelectorAll('.tab-content');
+            contents.forEach(function(content) {
+                content.classList.remove('active-content');
+            });
+
+            var tabs = document.querySelectorAll('.tab');
+            tabs.forEach(function(tab) {
+                tab.classList.remove('active-tab');
+            });
+
+            // Show the content of the selected tab
+            document.getElementById(category).classList.add('active-content');
+
+            // Highlight the selected tab
+            var activeTab = document.querySelector('.tab[onclick="showTab(\'' + category + '\')"]');
+            activeTab.classList.add('active-tab');
+        }
+
+        // Show loader on form submission and hide submit button
+        document.getElementById('weight-form').addEventListener('submit', function(event) {
+            var buttons = document.querySelectorAll('.submit-button');
+            buttons.forEach(function(button) {
+                button.style.display = 'none';
+            });
+
+            var loader = document.getElementById('loader');
+            loader.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
+

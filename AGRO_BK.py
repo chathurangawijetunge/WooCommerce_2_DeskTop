@@ -142,7 +142,8 @@ wcapi = API(
     url=credentials["url"],
     consumer_key=credentials["consumer_key"],
     consumer_secret=credentials["consumer_secret"],
-    version="wc/v3"
+    version="wc/v3",
+    timeout=10  # Increase timeout to 10 seconds
 )
 
 # GUI for controlling the server
@@ -180,7 +181,7 @@ def create_gui():
     global root
     root = tk.Tk()
     root.title("Flask Server")
-    root.geometry("300x250")
+    root.geometry("500x500")
     
     # Set custom icon for the window (handles both development and PyInstaller builds)
     try:
@@ -202,6 +203,13 @@ def create_gui():
 
     open_button = tk.Button(root, text="Edit Product Price", command=price_edit, font=("Arial", 10))
     open_button.pack(pady=10)
+
+    open_button = tk.Button(root, text="Edit Product weight", command=weight_edit, font=("Arial", 10))
+    open_button.pack(pady=10)
+
+    open_button = tk.Button(root, text="Edit Orders", command=order_edit, font=("Arial", 10))
+    open_button.pack(pady=10)
+
 
     edit_button = tk.Button(root, text="Edit API Credentials", command=edit_credentials, font=("Arial", 10))
     edit_button.pack(pady=10)
